@@ -12,6 +12,7 @@ from airflow.utils.trigger_rule import TriggerRule
 PROJECT_ID = "dataengineer-310515"
 CLUSTER_NAME = "dataproc-lab"
 REGION = "us-east1"
+DATALAKE = ""
 
 DEFAULT_ARGS = {
     'owner': 'Westerley Reis',
@@ -38,7 +39,7 @@ CLUSTER_CONFIG = {
 PYSPARK_JOB = {
     "reference": {"project_id": PROJECT_ID},
     "placement": {"cluster_name": CLUSTER_NAME},
-    "pyspark_job": {"main_python_file_uri": "gs:// /usr/local/airflow/jobs/titanic_job.py"}
+    "pyspark_job": {"main_python_file_uri": "gs://"}
 }
 
 dag = DAG(

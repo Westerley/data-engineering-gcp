@@ -25,9 +25,9 @@ if __name__ == '__main__':
 
     try:
         # Save the file in the processing zone with parquet format
-        passengers.coalesce(1).write.format("parquet").save(DATALAKE_PATH + "processing_zone/passengers.parquet")
+        passengers.write.format("parquet").save(DATALAKE_PATH + "processing_zone/passengers.parquet")
 
-        tickets.coalesce(1).write.format("parquet").save(DATALAKE_PATH + "processing_zone/tickets.parquet")
+        tickets.write.format("parquet").save(DATALAKE_PATH + "processing_zone/tickets.parquet")
         # Successfully Log info
         logger.log_text("Passengers and Tickets loaded successfully", severity="INFO")
     except Exception as err:

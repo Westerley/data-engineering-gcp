@@ -27,9 +27,9 @@ dag = DAG(
 set_account = BashOperator(
     task_id="set_account",
     bash_command=" \
-        /google-cloud-sdk/bin/gcloud config set account {{ params.account_name }} && \
-        /google-cloud-sdk/bin/gcloud config set project {{ params.project_id }} && \
-        /google-cloud-sdk/bin/gcloud auth activate-service-account {{ params.account_name }} \
+        gcloud config set account {{ params.account_name }} && \
+        gcloud config set project {{ params.project_id }} && \
+        gcloud auth activate-service-account {{ params.account_name }} \
             --key-file=/usr/local/airflow/service-account.json",
     params={"project_id": PROJECT_ID,
             "account_name": ACCOUNT_NAME},
@@ -43,24 +43,15 @@ dataproc_create_cluster = BashOperator(
 )
 
 submit_pyspark_job = BashOperator(
-    task_id="dataproc_create_cluster",
+    task_id="submit_pyspark_job",
     bash_command="bash ./usr/local/airflow/infrastructure/scripts/submit_pyspark_to_dataproc.sh",
     dag=dag
 )
 
-rename_tickets_parquet = BashOperator(
-    task_id="rename_tickets_parquet",
-    bash_command=" \
-                 gsutil mv gs://{{ datalake }}/processing_zone/passengers.parquet/*.parquet \
-                 gs://{{ datalake }}/processing_zone/passengers.parquet/passengers.parquet",
-    params={"datalake": "datalake-lab"},
-    dag=dag
-)
-
 dataproc_delete_cluster = BashOperator(
-    task_id="dataproc_create_cluster",
+    task_id="dataproc_delete_cluster",
     bash_command="bash ./usr/local/airflow/infrastructure/scripts/dataproc_delete_cluster.sh",
     dag=dag
 )
 
-set_account >> dataproc_create_cluster >> submit_pyspark_job >> rename_tickets_parquet >> dataproc_delete_cluster
+set_account >> dataproc_create_cluster >> submit_pyspark_job >> dataproc_delete_cluster
