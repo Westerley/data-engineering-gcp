@@ -1,0 +1,80 @@
+version: '2.2'
+services:
+    redis:
+        image: 'redis:5.0.5'
+        restart: always
+
+    postgres:
+        image: postgres:9.6
+        restart: always
+        environment:
+            - POSTGRES_USER=airflow
+            - POSTGRES_PASSWORD=airflow
+            - POSTGRES_DB=airflow
+
+    webserver:
+        image: westerley/docker-airflow:2.0.1
+        restart: always
+        depends_on:
+            - postgres
+            - redis
+        environment:
+            - LOAD_EX=n
+            - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+            - EXECUTOR=Celery
+        volumes:
+            - ./dags:/usr/local/airflow/dags
+            - ./config/airflow.cfg:/usr/local/airflow/airflow.cfg
+            - ./config/service-account.json:/usr/local/airflow/service-account.json
+            - ./jobs:/usr/local/airflow/jobs
+        ports:
+            - "8080:8080"
+        command: webserver
+        healthcheck:
+            test: ["CMD-SHELL", "[ -f /usr/local/airflow/airflow-webserver.pid ]"]
+            interval: 30s
+            timeout: 30s
+            retries: 3
+
+    flower:
+        image: westerley/docker-airflow:2.0.1
+        restart: always
+        depends_on:
+            - redis
+        environment:
+            - EXECUTOR=Celery
+        ports:
+            - "5555:5555"
+        command: celery flower
+
+    scheduler:
+        image: westerley/docker-airflow:2.0.1
+        restart: always
+        depends_on:
+            - webserver
+        volumes:
+            - ./dags:/usr/local/airflow/dags
+            - ./config/airflow.cfg:/usr/local/airflow/airflow.cfg
+            - ./config/service-account.json:/usr/local/airflow/service-account.json
+            - ./jobs:/usr/local/airflow/jobs
+        environment:
+            - LOAD_EX=n
+            - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+            - EXECUTOR=Celery
+        command: scheduler
+
+    worker:
+        image: westerley/docker-airflow:2.0.1
+        restart: always
+        depends_on:
+            - scheduler
+        volumes:
+            - ./dags:/usr/local/airflow/dags
+            - ./config/airflow.cfg:/usr/local/airflow/airflow.cfg
+            - ./config/service-account.json:/usr/local/airflow/service-account.json
+            - ./jobs:/usr/local/airflow/jobs
+        environment:
+            - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+            - EXECUTOR=Celery
+        command: celery worker
+
