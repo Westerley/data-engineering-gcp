@@ -38,7 +38,7 @@ CLUSTER_CONFIG = {
 PYSPARK_JOB = {
     "reference": {"project_id": PROJECT_ID},
     "placement": {"cluster_name": CLUSTER_NAME},
-    "pyspark_job": {"main_python_file_uri": "/usr/local/airflow/jobs/titanic_job.py"}
+    "pyspark_job": {"main_python_file_uri": "gs:// /usr/local/airflow/jobs/titanic_job.py"}
 }
 
 dag = DAG(
@@ -56,38 +56,13 @@ dataproc_create_cluster = DataprocCreateClusterOperator(
     dag=dag
 )
 
-dataproc_submit_job = BashOperator(
+dataproc_submit_job = DataprocSubmitJobOperator(
     task_id="dataproc_submit_job",
-    bash_command=" \
-    /google-cloud-sdk/bin/gcloud config set account {{ params.account_name }} && \
-    /google-cloud-sdk/bin/gcloud config set project {{ params.project_id }} && \
-    /google-cloud-sdk/bin/gcloud auth activate-service-account {{ params.account_name }} \
-        --key-file=/usr/local/airflow/service-account.json && \
-    /google-cloud-sdk/bin/gcloud dataproc jobs submit pyspark \
-    /usr/local/airflow/jobs/titanic_job.py \
-    --cluster={{ params.cluster_name }} \
-    --region={{ params.region }} \
-    ",
-    params={"cluster_name": CLUSTER_NAME,
-            "project_id": PROJECT_ID,
-            "region": REGION,
-            "account_name": "airflow@dataengineer-310515.iam.gserviceaccount.com"},
+    project_id=PROJECT_ID,
+    location=REGION,
+    job=PYSPARK_JOB,
     dag=dag
 )
-
-rename_tickets_parquet = BashOperator(
-    task_id="rename_tickets_parquet",
-    bash_command="gsutil mv gs://datalake-lab/processing_zone/passengers.parquet/*.parquet gs://datalake-lab/processing_zone/passengers.parquet/passengers.parquet",
-    dag=dag
-)
-
-# dataproc_submit_job = DataprocSubmitJobOperator(
-#     task_id="dataproc_submit_job",
-#     project_id=PROJECT_ID,
-#     location=REGION,
-#     job=PYSPARK_JOB,
-#     dag=dag
-# )
 
 dataproc_delete_cluster = DataprocDeleteClusterOperator(
     task_id="dataproc_delete_cluster",

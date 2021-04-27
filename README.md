@@ -53,4 +53,3 @@ docker-compose -f docker-compose-CeleryExecutor.yml up -d --build
 - Keyfile Path: local file path to the JSON keyfile's
 - Project id: corresponds to the project that your service account belongs to
 - Scopes: it is recommended to use https://www.googleapis.com/auth/cloud-platform
-
